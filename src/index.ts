@@ -87,11 +87,11 @@ export default {
       },
       theme: {
         title: "Authentication",
-        primary: "#000000",
+        primary: "#FF0000",
         favicon: "#",
         logo: {
           dark: "#",
-          light: "#",
+          light: "https://raw.githubusercontent.com/readtalk/sec/refs/heads/main/src/logo-light.png",
         },
       },
       success: async (ctx, value) => {
