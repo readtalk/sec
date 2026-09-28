@@ -8,14 +8,14 @@
   "kv_namespaces": [
     {
       "binding": "GLOBAL_KV",
-      "id": "12b393be34f444de84d0afebb00d8f53"
+      "id": "6ffcc61aed814e32b80e29c6fa5b44ee"
     }
   ],
   "d1_databases": [
     {
       "binding": "GLOBAL_DB",
-      "database_name": "read-talk-d1",
-      "database_id": "6533dda3-5555-4e33-b990-f23757e5521f"
+      "database_name": "to-trust",
+      "database_id": "6f7f17e5-74a6-46a1-a424-a1e5b0cb7284"
     }
   ],
   "observability": {
