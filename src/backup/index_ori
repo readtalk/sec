@@ -78,7 +78,7 @@ export default {
 } satisfies ExportedHandler<Env>;
 
 async function getOrCreateUser(env: Env, email: string): Promise<string> {
-	const result = await env.AUTH_DB.prepare(
+	const result = await env.GLOBAL_DB.prepare(
 		`
 		INSERT INTO user (email)
 		VALUES (?)
