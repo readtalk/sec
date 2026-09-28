@@ -1,5 +1,5 @@
 {
-	"name": "sec",
+	"name": "secure",
 	"description": "OpenAuth server on Cloudflare Workers.",
 	"cloudflare": {
 		"label": "OpenAuth Server",
