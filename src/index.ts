@@ -12,7 +12,7 @@ const subjects = createSubjects({
   }),
 });
 
-const SESSION_COOKIE = "session";
+const COOKIE_NAME = "session";
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 hari
 
 export default {
@@ -46,10 +46,10 @@ export default {
     // --- Dashboard: verifikasi HMAC cookie ---
     if (url.pathname === "/dashboard") {
       const cookies = parseCookies(request.headers.get("Cookie"));
-      const raw = cookies[SESSION_COOKIE];
+      const raw = cookies[COOKIE_NAME];
 
       const userId = raw
-        ? await verifySession(raw, env.SESSION_SECRET)
+        ? await verifySession(raw, env.SESSION)
         : null;
 
       if (!userId) {
@@ -119,7 +119,7 @@ export default {
       },
       success: async (ctx, value) => {
         const userId = await getOrCreateUser(env, value.email);
-        const cookieValue = await signSession(userId, env.SESSION_SECRET);
+        const cookieValue = await signSession(userId, env.SESSION);
 
         const headers = new Headers({ Location: "/dashboard" });
         headers.append("Set-Cookie", buildSessionCookie(cookieValue, url));
@@ -179,7 +179,6 @@ async function verifySession(
   );
   const expectedSig = toHex(expectedBuf);
 
-  // Perbandingan constant-time
   if (providedSig.length !== expectedSig.length) return null;
   let diff = 0;
   for (let i = 0; i < providedSig.length; i++) {
@@ -194,7 +193,7 @@ async function verifySession(
 
 function buildSessionCookie(value: string, url: URL): string {
   const parts = [
-    `${SESSION_COOKIE}=${encodeURIComponent(value)}`,
+    `${COOKIE_NAME}=${encodeURIComponent(value)}`,
     "HttpOnly",
     "SameSite=Lax",
     `Max-Age=${SESSION_MAX_AGE}`,
@@ -206,7 +205,7 @@ function buildSessionCookie(value: string, url: URL): string {
 
 function clearSessionCookie(url: URL): string {
   const parts = [
-    `${SESSION_COOKIE}=`,
+    `${COOKIE_NAME}=`,
     "HttpOnly",
     "SameSite=Lax",
     "Max-Age=0",
