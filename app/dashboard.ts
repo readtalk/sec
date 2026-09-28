@@ -22,7 +22,7 @@ export function DashboardHTML(user: { id: string; email: string }) {
       <p class="text-sm text-gray-500">User ID: <span class="font-mono">${user.id}</span></p>
     </div>
     <div class="mt-6">
-      <a href="/logout" class="w-full inline-block text-center bg-black-500 text-white px-4 py-2 rounded-lg hover:bg-black-600 transition">
+      <a href="/logout" class="w-full inline-block text-center bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
         Logout
       </a>
     </div>
