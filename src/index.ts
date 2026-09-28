@@ -46,7 +46,7 @@ export default {
         return Response.redirect("/");
       }
 
-      const user = await env.AUTH_DB.prepare(
+      const user = await env.GLOBAL_DB.prepare(
         "SELECT id, email FROM user WHERE id = ?"
       )
         .bind(userId)
@@ -70,7 +70,7 @@ export default {
 
     return issuer({
       storage: CloudflareStorage({
-        namespace: env.AUTH_STORAGE,
+        namespace: env.GLOBAL_KV,
       }),
       subjects,
       providers: {
@@ -86,8 +86,8 @@ export default {
         ),
       },
       theme: {
-        title: "READTalk OpenAuth",
-        primary: "#ff0000",
+        title: "Authentication",
+        primary: "#000000",
         favicon: "#",
         logo: {
           dark: "#",
@@ -110,7 +110,7 @@ export default {
 } satisfies ExportedHandler<Env>;
 
 async function getOrCreateUser(env: Env, email: string): Promise<string> {
-  const result = await env.AUTH_DB.prepare(
+  const result = await env.GLOBAL_DB.prepare(
     `
     INSERT INTO user (email)
     VALUES (?)
