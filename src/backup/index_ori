@@ -39,7 +39,7 @@ export default {
 		// The real OpenAuth server code starts here:
 		return issuer({
 			storage: CloudflareStorage({
-				namespace: env.AUTH_STORAGE,
+				namespace: env.GLOBAL_KV,
 			}),
 			subjects,
 			providers: {
@@ -59,13 +59,13 @@ export default {
 				),
 			},
 			theme: {
-				title: "READTalk OpenAuth",
-				primary: "#ff0000",
-				favicon: "https://id-readtalk.pages.dev/vite.svg",
+				title: "Authentication",
+				primary: "#FF0000",
+				favicon: "#",
 				logo: {
-					dark: "https://id-readtalk.pages.dev/vite.svg",
+					dark: "#",
 					light:
-						"https://id-readtalk.pages.dev/vite.svg",
+						"#",
 				},
 			},
 			success: async (ctx, value) => {
