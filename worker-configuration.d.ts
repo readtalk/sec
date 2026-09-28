@@ -8,6 +8,7 @@ declare namespace Cloudflare {
 	interface Env {
 		GLOBAL_KV: KVNamespace;
 		GLOBAL_DB: D1Database;
+		SESSION: String;
 	}
 }
 interface Env extends Cloudflare.Env {}
