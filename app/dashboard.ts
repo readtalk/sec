@@ -8,6 +8,16 @@ type DashboardUser = {
   links: string | null;
 };
 
+const PLATFORMS = [
+  { key: "instagram", label: "Instagram", base: "https://instagram.com/", prefix: "" },
+  { key: "facebook",  label: "Facebook",  base: "https://facebook.com/",  prefix: "" },
+  { key: "tiktok",    label: "TikTok",    base: "https://tiktok.com/@",  prefix: "@" },
+  { key: "twitter",   label: "Twitter/X", base: "https://x.com/",         prefix: "" },
+  { key: "youtube",   label: "YouTube",   base: "https://youtube.com/@",  prefix: "@" },
+  { key: "linkedin",  label: "LinkedIn",  base: "https://linkedin.com/in/", prefix: "" },
+  { key: "github",    label: "GitHub",    base: "https://github.com/",    prefix: "" },
+] as const;
+
 function escapeHtml(input: string): string {
   return input.replace(/[&<>"']/g, (c) => {
     switch (c) {
@@ -21,36 +31,48 @@ function escapeHtml(input: string): string {
   });
 }
 
-function renderLinks(raw: string | null): string {
-  if (!raw) return `<p class="text-sm text-gray-400">Belum ada link.</p>`;
-
-  let parsed: unknown;
+function parseLinks(raw: string | null): Record<string, string> {
+  if (!raw) return {};
   try {
-    parsed = JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+      return {};
+    }
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(parsed)) {
+      if (typeof v === "string") out[k] = v;
+    }
+    return out;
   } catch {
-    return `<p class="text-sm text-gray-400">Format links tidak valid.</p>`;
+    return {};
   }
+}
 
-  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    return `<p class="text-sm text-gray-400">Format links harus objek JSON.</p>`;
+/** Ambil slug dari URL, buang base-nya. Contoh: "https://x.com/foo" → "foo" */
+function extractSlug(key: string, url: string): string {
+  const platform = PLATFORMS.find((p) => p.key === key);
+  if (!platform) return url;
+  if (!url.startsWith(platform.base)) return url;
+  let slug = url.slice(platform.base.length);
+  if (platform.prefix && slug.startsWith(platform.prefix)) {
+    slug = slug.slice(platform.prefix.length);
   }
+  return slug.replace(/\/+$/, "");
+}
 
-  const entries = Object.entries(parsed).filter(
-    ([, url]) => typeof url === "string"
-  );
-
+function renderLinks(raw: string | null): string {
+  const links = parseLinks(raw);
+  const entries = Object.entries(links);
   if (entries.length === 0) {
     return `<p class="text-sm text-gray-400">Belum ada link.</p>`;
   }
-
   const items = entries
     .map(([key, url]) => {
       const label = escapeHtml(key.charAt(0).toUpperCase() + key.slice(1));
-      const href = escapeHtml(url as string);
+      const href = escapeHtml(url);
       return `<li><span class="text-gray-500">${label}:</span> <a href="${href}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline break-all">${href}</a></li>`;
     })
     .join("");
-
   return `<ul class="list-disc list-inside text-sm space-y-1">${items}</ul>`;
 }
 
@@ -66,6 +88,8 @@ export function DashboardHTML(
   const safeAvatar = escapeHtml(user.avatar ?? "");
   const initial = escapeHtml((user.email[0] ?? "?").toUpperCase());
 
+  const links = parseLinks(user.links);
+
   const avatarBlock = user.avatar
     ? `<img src="${safeAvatar}" alt="avatar" class="w-12 h-12 rounded-full object-cover" />`
     : `<div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white text-xl font-bold">${initial}</div>`;
@@ -75,6 +99,28 @@ export function DashboardHTML(
     : flash?.error
       ? `<div class="mb-4 rounded-lg bg-red-100 text-red-800 text-sm px-3 py-2">${escapeHtml(flash.error)}</div>`
       : "";
+
+  const platformInputs = PLATFORMS.map((p) => {
+    const existing = links[p.key] ?? "";
+    const slug = existing ? extractSlug(p.key, existing) : "";
+    const safeSlug = escapeHtml(slug);
+    return `
+      <div class="flex items-center gap-2">
+        <span class="w-24 text-sm text-gray-600 shrink-0">${p.label}</span>
+        <span class="text-xs text-gray-400 font-mono hidden sm:inline">${escapeHtml(p.base)}${p.prefix ? escapeHtml(p.prefix) : ""}</span>
+        <input
+          type="text"
+          name="link_${p.key}"
+          value="${safeSlug}"
+          placeholder="username"
+          class="flex-1 border rounded-lg px-3 py-2 text-sm"
+        />
+      </div>
+    `;
+  }).join("");
+
+  const websiteExisting = links["website"] ?? "";
+  const safeWebsite = escapeHtml(websiteExisting);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -118,11 +164,20 @@ export function DashboardHTML(
           <label class="block text-sm font-medium mb-1">Avatar URL</label>
           <input type="url" name="avatar" value="${safeAvatar}" class="w-full border rounded-lg px-3 py-2" />
         </div>
-        <div>
-          <label class="block text-sm font-medium mb-1">Links (JSON)</label>
-          <textarea name="links" rows="4" class="w-full border rounded-lg px-3 py-2 font-mono text-sm">${escapeHtml(user.links ?? "")}</textarea>
-          <p class="text-xs text-gray-400 mt-1">Format: {"instagram":"https://...","twitter":"https://..."}</p>
+
+        <div class="border-t pt-4">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">Media Sosial</h3>
+          <p class="text-xs text-gray-400 mb-3">Isi username saja—URL otomatis dibentuk. Kosongkan kalau tidak dipakai.</p>
+          <div class="space-y-3">
+            ${platformInputs}
+          </div>
         </div>
+
+        <div class="border-t pt-4">
+          <label class="block text-sm font-medium mb-1">Website</label>
+          <input type="url" name="link_website" value="${safeWebsite}" placeholder="https://..." class="w-full border rounded-lg px-3 py-2" />
+        </div>
+
         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg">Simpan</button>
       </form>
     </div>
