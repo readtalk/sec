@@ -1,6 +1,6 @@
 {
 	"name": "url",
-	"description": "READTalk Smarturl on Cloudflare Workers.",
+	"description": "Database Server",
 	"cloudflare": {
 		"label": "Database Server",
 		"products": [
