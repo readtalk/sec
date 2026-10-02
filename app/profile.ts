@@ -6,7 +6,7 @@ type ProfileUser = {
 };
 
 const DEFAULT_OG_IMAGE =
-  "https://raw.githubusercontent.com/readtalk/sec/refs/heads/main/public/favicon.ico";
+  "https://raw.githubusercontent.com/readtalk/url/refs/heads/main/public/favicon.ico";
 
 function escapeHtml(input: string): string {
   return input.replace(/[&<>"']/g, (c) => {
