@@ -5,6 +5,7 @@ import { PasswordUI } from "@openauthjs/openauth/ui/password";
 import { createSubjects } from "@openauthjs/openauth/subject";
 import { object, string } from "valibot";
 import { DashboardHTML } from "../app/dashboard";
+import { ProfileHTML, NotFoundHTML } from "../app/profile";
 
 const subjects = createSubjects({
   user: object({
@@ -55,7 +56,42 @@ export default {
       });
     }
 
-    // --- Dashboard: POST (simpan) ---
+    // --- Profil publik /@username ---
+    if (url.pathname.startsWith("/@")) {
+      const username = decodeURIComponent(url.pathname.slice(2));
+
+      if (!/^[a-zA-Z0-9_-]{1,64}$/.test(username)) {
+        return new Response(NotFoundHTML(username), {
+          status: 404,
+          headers: { "Content-Type": "text/html; charset=utf-8" },
+        });
+      }
+
+      let user: ProfileUserRow | null = null;
+      try {
+        user = await env.GLOBAL_DB.prepare(
+          "SELECT username, display_name, avatar, links FROM user WHERE username = ?"
+        )
+          .bind(username)
+          .first<ProfileUserRow>();
+      } catch (err) {
+        console.error("D1 query failed on profile:", err);
+        return new Response("Internal error", { status: 500 });
+      }
+
+      if (!user) {
+        return new Response(NotFoundHTML(username), {
+          status: 404,
+          headers: { "Content-Type": "text/html; charset=utf-8" },
+        });
+      }
+
+      return new Response(ProfileHTML(user), {
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      });
+    }
+
+    // --- Dashboard: POST ---
     if (url.pathname === "/dashboard" && request.method === "POST") {
       const cookies = parseCookies(request.headers.get("Cookie"));
       const raw = cookies[COOKIE_NAME];
@@ -78,9 +114,15 @@ export default {
       if (!error && links) {
         try {
           const parsed = JSON.parse(links);
-          if (!Array.isArray(parsed)) throw new Error();
+          if (
+            typeof parsed !== "object" ||
+            parsed === null ||
+            Array.isArray(parsed)
+          ) {
+            throw new Error();
+          }
         } catch {
-          error = "Links harus JSON array yang valid.";
+          error = "Links harus objek JSON yang valid.";
         }
       }
 
@@ -207,6 +249,13 @@ export default {
     }).fetch(request, env, ctx);
   },
 } satisfies ExportedHandler<Env>;
+
+type ProfileUserRow = {
+  username: string;
+  display_name: string | null;
+  avatar: string | null;
+  links: string | null;
+};
 
 // ---------------------------------------------------------------------------
 // HMAC
