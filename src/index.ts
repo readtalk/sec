@@ -258,11 +258,11 @@ export default {
         title: "Authentication",
         primary: "#FF0000",
         favicon:
-          "https://raw.githubusercontent.com/readtalk/sec/refs/heads/main/public/favicon.ico",
+          "https://raw.githubusercontent.com/readtalk/url/refs/heads/main/public/favicon.ico",
         logo: {
-          dark: "https://raw.githubusercontent.com/readtalk/sec/refs/heads/main/src/logo-dark.png",
+          dark: "https://raw.githubusercontent.com/readtalk/url/refs/heads/main/src/logo-dark.png",
           light:
-            "https://raw.githubusercontent.com/readtalk/sec/refs/heads/main/src/logo-light.png",
+            "https://raw.githubusercontent.com/readtalk/url/refs/heads/main/src/logo-light.png",
         },
       },
       success: async (ctx, value) => {
