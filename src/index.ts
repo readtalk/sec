@@ -19,11 +19,28 @@ const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
 const USER_FIELDS =
   "id, email, created_at, username, display_name, avatar, links";
 
+const PLATFORM_DEFS: Array<{ key: string; base: string; prefix: string }> = [
+  { key: "instagram", base: "https://instagram.com/", prefix: "" },
+  { key: "facebook", base: "https://facebook.com/", prefix: "" },
+  { key: "tiktok", base: "https://tiktok.com/@", prefix: "@" },
+  { key: "twitter", base: "https://x.com/", prefix: "" },
+  { key: "youtube", base: "https://youtube.com/@", prefix: "@" },
+  { key: "linkedin", base: "https://linkedin.com/in/", prefix: "" },
+  { key: "github", base: "https://github.com/", prefix: "" },
+];
+
 type UserRow = {
   id: string;
   email: string;
   created_at: string;
   username: string | null;
+  display_name: string | null;
+  avatar: string | null;
+  links: string | null;
+};
+
+type ProfileUserRow = {
+  username: string;
   display_name: string | null;
   avatar: string | null;
   links: string | null;
@@ -91,7 +108,7 @@ export default {
       });
     }
 
-    // --- Dashboard: POST ---
+    // --- Dashboard: POST (simpan) ---
     if (url.pathname === "/dashboard" && request.method === "POST") {
       const cookies = parseCookies(request.headers.get("Cookie"));
       const raw = cookies[COOKIE_NAME];
@@ -105,25 +122,34 @@ export default {
       const username = String(form.get("username") ?? "").trim() || null;
       const displayName = String(form.get("display_name") ?? "").trim() || null;
       const avatar = String(form.get("avatar") ?? "").trim() || null;
-      const links = String(form.get("links") ?? "").trim() || null;
+
+      const linksObj: Record<string, string> = {};
+
+      for (const p of PLATFORM_DEFS) {
+        let slug = String(form.get(`link_${p.key}`) ?? "").trim();
+        if (!slug) continue;
+        if (p.prefix && slug.startsWith(p.prefix)) {
+          slug = slug.slice(p.prefix.length);
+        }
+        if (slug.startsWith("http")) {
+          slug = slug.replace(/^https?:\/\//, "").replace(/^www\./, "");
+          const parts = slug.split("/").filter(Boolean);
+          slug = parts[parts.length - 1] ?? "";
+        }
+        slug = slug.replace(/\/+$/, "");
+        if (!slug) continue;
+        linksObj[p.key] = `${p.base}${slug}`;
+      }
+
+      const website = String(form.get("link_website") ?? "").trim();
+      if (website) linksObj["website"] = website;
+
+      const links =
+        Object.keys(linksObj).length > 0 ? JSON.stringify(linksObj) : null;
 
       let error: string | null = null;
       if (username && !/^[a-zA-Z0-9_-]{3,32}$/.test(username)) {
         error = "Username tidak valid (3-32 karakter, huruf/angka/_/-).";
-      }
-      if (!error && links) {
-        try {
-          const parsed = JSON.parse(links);
-          if (
-            typeof parsed !== "object" ||
-            parsed === null ||
-            Array.isArray(parsed)
-          ) {
-            throw new Error();
-          }
-        } catch {
-          error = "Links harus objek JSON yang valid.";
-        }
       }
 
       if (error) {
@@ -249,13 +275,6 @@ export default {
     }).fetch(request, env, ctx);
   },
 } satisfies ExportedHandler<Env>;
-
-type ProfileUserRow = {
-  username: string;
-  display_name: string | null;
-  avatar: string | null;
-  links: string | null;
-};
 
 // ---------------------------------------------------------------------------
 // HMAC
