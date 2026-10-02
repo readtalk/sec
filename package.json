@@ -1,8 +1,8 @@
 {
-	"name": "secure",
-	"description": "OpenAuth server on Cloudflare Workers.",
+	"name": "url",
+	"description": "READTalk Smarturl on Cloudflare Workers.",
 	"cloudflare": {
-		"label": "OpenAuth Server",
+		"label": "Database Server",
 		"products": [
 			"Workers",
 			"D1",
