@@ -23,25 +23,34 @@ function escapeHtml(input: string): string {
 
 function renderLinks(raw: string | null): string {
   if (!raw) return `<p class="text-sm text-gray-400">Belum ada link.</p>`;
+
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch {
     return `<p class="text-sm text-gray-400">Format links tidak valid.</p>`;
   }
-  if (!Array.isArray(parsed) || parsed.length === 0) {
+
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    return `<p class="text-sm text-gray-400">Format links harus objek JSON.</p>`;
+  }
+
+  const entries = Object.entries(parsed).filter(
+    ([, url]) => typeof url === "string"
+  );
+
+  if (entries.length === 0) {
     return `<p class="text-sm text-gray-400">Belum ada link.</p>`;
   }
-  const items = parsed
-    .map((item) => {
-      if (typeof item !== "object" || item === null) return "";
-      const label = (item as any).label;
-      const url = (item as any).url;
-      if (typeof label !== "string" || typeof url !== "string") return "";
-      return `<li><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${escapeHtml(label)}</a></li>`;
+
+  const items = entries
+    .map(([key, url]) => {
+      const label = escapeHtml(key.charAt(0).toUpperCase() + key.slice(1));
+      const href = escapeHtml(url as string);
+      return `<li><span class="text-gray-500">${label}:</span> <a href="${href}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline break-all">${href}</a></li>`;
     })
-    .filter(Boolean)
     .join("");
+
   return `<ul class="list-disc list-inside text-sm space-y-1">${items}</ul>`;
 }
 
@@ -112,7 +121,7 @@ export function DashboardHTML(
         <div>
           <label class="block text-sm font-medium mb-1">Links (JSON)</label>
           <textarea name="links" rows="4" class="w-full border rounded-lg px-3 py-2 font-mono text-sm">${escapeHtml(user.links ?? "")}</textarea>
-          <p class="text-xs text-gray-400 mt-1">Format: [{"label":"GitHub","url":"https://..."}]</p>
+          <p class="text-xs text-gray-400 mt-1">Format: {"instagram":"https://...","twitter":"https://..."}</p>
         </div>
         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg">Simpan</button>
       </form>
